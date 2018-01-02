@@ -92,6 +92,7 @@ extern "C" {
 
 #define Board_I2C0              CC1310_LAUNCHXL_I2C0
 #define Board_I2C_TMP           CC1310_LAUNCHXL_I2C0
+#define Board_I2C_BME280        CC1310_LAUNCHXL_I2C0
 
 #define Board_NVS0              CC1310_LAUNCHXL_NVSCC26XX0
 #define Board_NVS1              CC1310_LAUNCHXL_NVSSPI25X0
@@ -128,6 +129,7 @@ extern "C" {
 /* Board specific I2C addresses */
 #define Board_TMP_ADDR          (0x40)
 #define Board_SENSORS_BP_TMP_ADDR Board_TMP_ADDR
+#define Board_BME280_ADDR       (0x76)
 
 /*
  * These macros are provided for backwards compatibility.
