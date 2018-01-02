@@ -154,6 +154,15 @@ int8_t user_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint1
     return rslt;
 }
 
+void print_sensor_data(struct bme280_data *comp_data)
+{
+#ifdef BME280_FLOAT_ENABLE
+        printf("%0.2f, %0.2f, %0.2f\r\n",comp_data->temperature, comp_data->pressure, comp_data->humidity);
+#else
+        Display_printf(display, 0, 0, "temp = %ld, pressure = %ld, humidity = %ld\r\n",comp_data->temperature, comp_data->pressure, comp_data->humidity);
+#endif
+}
+
 /*
  *  ======== mainThread ========
  */
@@ -202,44 +211,33 @@ void *mainThread(void *arg0)
 
     Display_printf(display, 0, 0, "BME280 Init result = %d\n", rslt);
 
-#if 0
-    /* Point to the T ambient register and read its 2 bytes */
-    txBuffer[0] = TMP007_OBJ_TEMP;
-    i2cTransaction.slaveAddress = Board_TMP_ADDR;
-    i2cTransaction.writeBuf = txBuffer;
-    i2cTransaction.writeCount = 1;
-    i2cTransaction.readBuf = rxBuffer;
-    i2cTransaction.readCount = 2;
+    // configure BME280 in forced mode
+    /* Recommended mode of operation: Indoor navigation */
+    dev.settings.osr_h = BME280_OVERSAMPLING_1X;
+    dev.settings.osr_p = BME280_OVERSAMPLING_16X;
+    dev.settings.osr_t = BME280_OVERSAMPLING_2X;
+    dev.settings.filter = BME280_FILTER_COEFF_16;
 
-    /* Take 20 samples and print them out onto the console */
-    for (i = 0; i < 20; i++) {
-        if (I2C_transfer(i2c, &i2cTransaction)) {
-            /* Extract degrees C from the received data; see TMP102 datasheet */
-            temperature = (rxBuffer[0] << 6) | (rxBuffer[1] >> 2);
+    uint8_t settings_sel;
+    settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
 
-            /*
-             * If the MSB is set '1', then we have a 2's complement
-             * negative value which needs to be sign extended
-             */
-            if (rxBuffer[0] & 0x80) {
-                temperature |= 0xF000;
-            }
-           /*
-            * For simplicity, divide the temperature value by 32 to get rid of
-            * the decimal precision; see TI's TMP007 datasheet
-            */
-            temperature /= 32;
+    rslt = bme280_set_sensor_settings(settings_sel, &dev);
+    Display_printf(display, 0, 0, "BME280 configuration result = %d\n", rslt);
 
-            Display_printf(display, 0, 0, "Sample %u: %d (C)\n", i, temperature);
-        }
-        else {
-            Display_printf(display, 0, 0, "I2C Bus fault\n");
-        }
+    // periodically read BME280 sensor in forced mode
+    while(true) {
 
-        /* Sleep for 1 second */
-        sleep(1);
+        struct bme280_data comp_data;
+        rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, &dev);
+        /* Wait for the measurement to complete and print data @25Hz */
+        dev.delay_ms(40);
+        rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, &dev);
+        Display_printf(display, 0, 0, "BME280 get_sensor_data() = %d\n", rslt);
+
+        print_sensor_data(&comp_data);
+
+        sleep(2);
     }
-#endif
 
     /* Deinitialized I2C */
     I2C_close(i2c);
