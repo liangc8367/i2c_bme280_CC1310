@@ -212,11 +212,18 @@ void *mainThread(void *arg0)
     Display_printf(display, 0, 0, "BME280 Init result = %d\n", rslt);
 
     // configure BME280 in forced mode
+#if 0
     /* Recommended mode of operation: Indoor navigation */
     dev.settings.osr_h = BME280_OVERSAMPLING_1X;
     dev.settings.osr_p = BME280_OVERSAMPLING_16X;
     dev.settings.osr_t = BME280_OVERSAMPLING_2X;
     dev.settings.filter = BME280_FILTER_COEFF_16;
+#endif
+    /* Weather station, ultra-low power */
+    dev.settings.osr_h = BME280_OVERSAMPLING_1X;
+    dev.settings.osr_p = BME280_OVERSAMPLING_1X;
+    dev.settings.osr_t = BME280_OVERSAMPLING_1X;
+    dev.settings.filter = BME280_FILTER_COEFF_OFF;
 
     uint8_t settings_sel;
     settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
