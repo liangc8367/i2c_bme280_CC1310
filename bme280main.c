@@ -54,6 +54,9 @@ static Display_Handle display;
 I2C_Handle      i2c;    // i2c handle for BME280
 
 #include "bme280.h"
+#include <ti/devices/DeviceFamily.h>
+#include DeviceFamily_constructPath(driverlib/aon_batmon.h)
+
 // BME280 HAL
 void user_delay_ms(uint32_t period)
 {
@@ -163,6 +166,13 @@ void print_sensor_data(struct bme280_data *comp_data)
 #endif
 }
 
+void GetCPUBatteryAndTemp()
+{
+    int32_t temp = AONBatMonTemperatureGetDegC();
+    uint32_t vol = AONBatMonBatteryVoltageGet();
+    Display_printf(display, 0, 0, "CPU Temperature = %i, Voltage = %.2f\n", temp, vol/256.0);
+}
+
 /*
  *  ======== mainThread ========
  */
@@ -243,6 +253,7 @@ void *mainThread(void *arg0)
 
         print_sensor_data(&comp_data);
 
+        GetCPUBatteryAndTemp();
         sleep(2);
     }
 
